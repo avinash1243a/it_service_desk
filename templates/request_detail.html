@@ -1,0 +1,185 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Request SR-{{ service_request.pk }}</h1>
+    <p>{{ service_request.title }}</p>
+</div>
+
+<div class="card">
+    <h2>Request Details</h2>
+
+    <p><strong>Description:</strong> {{ service_request.description }}</p>
+    <p><strong>Category:</strong> {{ service_request.category.name }}</p>
+    <p><strong>Priority:</strong> {{ service_request.sla.get_priority_display }}</p>
+    <p><strong>Status:</strong> {{ service_request.get_status_display }}</p>
+    <p><strong>Requester:</strong> {{ service_request.requester.username }}</p>
+
+    <p>
+        <strong>Assigned to:</strong>
+        {% if service_request.assigned_to %}
+            {{ service_request.assigned_to.username }}
+        {% else %}
+            Unassigned
+        {% endif %}
+    </p>
+
+    <p>
+        <strong>Created:</strong>
+        {{ service_request.created_at|date:"d M Y, H:i" }}
+    </p>
+
+    <p>
+        <strong>SLA deadline:</strong>
+        {% if service_request.sla_due_at %}
+            {{ service_request.sla_due_at|date:"d M Y, H:i" }}
+        {% else %}
+            Not configured
+        {% endif %}
+    </p>
+
+    <p><strong>SLA status:</strong> {{ service_request.sla_state|title }}</p>
+
+    {% if service_request.reopened_from %}
+        <p>
+            <strong>Follow-up to:</strong>
+            <a href="{% url 'request_detail' service_request.reopened_from.pk %}">
+                SR-{{ service_request.reopened_from.pk }}
+            </a>
+        </p>
+    {% endif %}
+
+    {% if service_request.follow_up_requests.exists %}
+        <p><strong>Follow-up requests:</strong></p>
+        <ul>
+            {% for follow_up in service_request.follow_up_requests.all %}
+                <li>
+                    <a href="{% url 'request_detail' follow_up.pk %}">
+                        SR-{{ follow_up.pk }} — {{ follow_up.get_status_display }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if request.user.is_superuser and service_request.status == "closed" %}
+        <form method="post"
+              action="{% url 'reopen_as_new_ticket' service_request.pk %}">
+            {% csrf_token %}
+            <button type="submit">Reopen as New Ticket</button>
+        </form>
+    {% endif %}
+</div>
+
+{% if request.user.is_staff %}
+<div class="card">
+    <h2>Assign Request</h2>
+
+    <form method="post" action="{% url 'assign_request' service_request.pk %}">
+        {% csrf_token %}
+        {{ assignment_form.as_p }}
+        <button type="submit">Assign Request</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Change Status</h2>
+
+    <form method="post" action="{% url 'change_request_status' service_request.pk %}">
+        {% csrf_token %}
+
+        <label for="status">New status</label>
+        <select name="status" id="status" required>
+            <option value="">Select a status</option>
+            {% for value, label in service_request.STATUS_CHOICES %}
+                {% if service_request.status != "closed" or request.user.is_superuser and value == "in_progress" %}
+                    <option value="{{ value }}">{{ label }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+
+        <label for="details">Resolution details (required when resolving)</label>
+        <textarea name="details" id="details" rows="3"></textarea>
+
+        <button type="submit">Update Status</button>
+    </form>
+</div>
+{% endif %}
+
+{% if request.user.is_staff %}
+<div class="card">
+    <h2>Change Priority</h2>
+
+    <p>
+        Current priority:
+        <strong>{{ service_request.sla.get_priority_display }}</strong>
+    </p>
+
+    <form method="post"
+          action="{% url 'change_request_priority' service_request.pk %}">
+        {% csrf_token %}
+
+        <label for="priority">New priority</label>
+        <select name="priority" id="priority" required>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+        </select>
+
+        <button type="submit">Update Priority</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Add Comment</h2>
+
+    <form method="post" action="{% url 'add_comment' service_request.pk %}">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button type="submit">Add Comment</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Comments</h2>
+
+    {% for comment in service_request.comments.all %}
+        <div class="comment">
+            <p>{{ comment.message|linebreaksbr }}</p>
+            <small>
+                By {{ comment.author.username }} —
+                {{ comment.created_at|date:"d M Y, H:i" }}
+            </small>
+        </div>
+    {% empty %}
+        <p>No comments yet.</p>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <h2>Request History</h2>
+
+    {% for event in service_request.history.all %}
+        <div class="history-entry">
+            <p><strong>{{ event.action|title }}</strong></p>
+            <p>{{ event.details }}</p>
+            <small>
+                {% if event.performed_by %}
+                    {{ event.performed_by.username }}
+                {% else %}
+                    System
+                {% endif %}
+                — {{ event.created_at|date:"d M Y, H:i" }}
+            </small>
+        </div>
+    {% empty %}
+        <p>No history recorded yet.</p>
+    {% endfor %}
+</div>
+
+<a href="{% url 'dashboard' %}">← Back to Dashboard</a>
+{% endblock %}
+```

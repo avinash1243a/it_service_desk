@@ -1,0 +1,101 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>IT Service Request Dashboard</h1>
+    <p>View and manage your service requests.</p>
+</div>
+
+<div class="dashboard-stats">
+    <div class="card">
+        <h3>Total Requests</h3>
+        <p class="stat-number">{{ total_requests }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Open Requests</h3>
+        <p class="stat-number">{{ open_requests }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Resolved Requests</h3>
+        <p class="stat-number">{{ resolved_requests }}</p>
+    </div>
+
+    <div class="card">
+        <h3>Overdue Requests</h3>
+        <p class="stat-number">{{ overdue_requests|length }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Service Requests</h2>
+
+    <p>
+        <a href="{% url 'create_request' %}">+ Create New Request</a>
+    </p>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>SLA</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in service_requests %}
+                <tr>
+                    <td>SR-{{ item.pk }}</td>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.category.name }}</td>
+                    <td>{{ item.sla.get_priority_display }}</td>
+                    <td>{{ item.get_status_display }}</td>
+                    <td>
+                        {% if item.assigned_to %}
+                            {{ item.assigned_to.username }}
+                        {% else %}
+                            Unassigned
+                        {% endif %}
+                    </td>
+                    
+<td>
+    {% if item.sla_state == "overdue" %}
+        <span class="sla-badge overdue">Overdue</span>
+    {% elif item.sla_state == "warning" %}
+        <span class="sla-badge warning">Warning</span>
+    {% elif item.sla_state == "on_track" %}
+        <span class="sla-badge on-track">On Track</span>
+    {% elif item.sla_state == "completed" %}
+        <span class="sla-badge completed">Completed</span>
+    {% else %}
+        <span class="sla-badge">Not Configured</span>
+    {% endif %}
+</td>
+
+                    <td>
+                        <a href="{% url 'request_detail' item.pk %}">
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        No service requests yet. Create your first request.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and backups
+db.sqlite3
+db_sqlite_backup.sqlite3
+data_backup.json
+
+# Editor files
+.vscode/
+
+# Test and coverage files
+.coverage
+htmlcov/

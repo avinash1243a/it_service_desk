@@ -1,0 +1,50 @@
+
+{% extends "base.html" %}
+
+{% block title %}Create Service Request{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Create Service Request</h1>
+    <p>Submit a new IT support request.</p>
+</div>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="message error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div>
+            <label for="{{ form.title.id_for_label }}">Request Title</label>
+            {{ form.title }}
+            {{ form.title.errors }}
+        </div>
+
+        <div>
+            <label for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            {{ form.description.errors }}
+        </div>
+
+        <div>
+            <label for="{{ form.category.id_for_label }}">Category</label>
+            {{ form.category }}
+            {{ form.category.errors }}
+        </div>
+
+        <div>
+            <label for="{{ form.priority.id_for_label }}">Priority</label>
+            {{ form.priority }}
+            {{ form.priority.errors }}
+        </div>
+
+        <button type="submit">Submit Request</button>
+        <a href="{% url 'dashboard' %}">Cancel</a>
+    </form>
+</div>
+{% endblock %}
